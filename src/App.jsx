@@ -92,7 +92,7 @@ document.head.appendChild(s);
 }
 
 // ========================= CONFIG (no secrets) =========================
-const PROXY_BASE = ""; // same-origin proxy
+const PROXY_BASE = "/api"; // same-origin proxy
 const ONLY_POSITIVE_BALANCE = true;
 const DEFAULT_STOCK_ID = 83673;
 const MAX_CHILD_BATCH = 12; // how many subcats to aggregate when opening a parent
