@@ -98,7 +98,7 @@ const DEFAULT_STOCK_ID = 83673;
 const MAX_CHILD_BATCH = 12; // how many subcats to aggregate when opening a parent
 
 // helpers
-const proxify = (path) => `https://api.wipon.kz`;
+const proxify = (path) => `https://api.wipon.kz${path}`;
 async function fetchJson(url){const r = await fetch(url,{headers:{Accept:"application/json"}}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json();}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
 const fmtMoney=(v)=> v==null?"—": new Intl.NumberFormat('ru-RU').format(Number(v))+" ₸";
