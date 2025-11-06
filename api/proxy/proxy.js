@@ -7,27 +7,28 @@ function log(...args) { console.log('[proxy]', ...args); }
 
 async function safeRead(r) {
   const ct = r.headers.get('content-type') || '';
-  if (ct.includes('application/json')) {
-    try { return await r.json(); } catch {}
-  }
+  if (ct.includes('application/json')) { try { return await r.json(); } catch {} }
   const text = await r.text();
   try { return JSON.parse(text); } catch { return text; }
 }
 
 export default async function handler(req, res) {
   try {
-    const API_BASE   = process.env.VITE_API_BASE || 'https://api.wipon.kz';
-    const AUTH_PATH  = process.env.VITE_WIPON_AUTH_PATH || '/v1/oauth/token';
-    const USERNAME   = process.env.VITE_WIPON_USER;
-    const PASSWORD   = process.env.VITE_WIPON_PASS;
-    const EMPLOYEE_ID= process.env.VITE_EMPLOYEE_ID;
+    // ⚠️ СЕКРЕТЫ: читаем ТОЛЬКО из server env (без VITE_)
+    const API_BASE    = process.env.API_BASE    || 'https://api.wipon.kz';
+    const AUTH_PATH   = process.env.WIPON_AUTH_PATH || '/v1/oauth/token';
+    const USERNAME    = process.env.WIPON_USER;
+    const PASSWORD    = process.env.WIPON_PASS;
+    const EMPLOYEE_ID = process.env.EMPLOYEE_ID;
 
     if (!USERNAME || !PASSWORD) throw new Error('Missing WIPON_USER / WIPON_PASS');
 
     async function getToken() {
+      // валиден?
       if (cached?.expires_at && cached.expires_at > Date.now() + 15000) {
         return cached.access_token;
       }
+      // refresh
       if (cached?.refresh_token) {
         try {
           const body = new URLSearchParams({
@@ -52,6 +53,7 @@ export default async function handler(req, res) {
           log('refresh error → fallback to password', e.message);
         }
       }
+      // password
       const body = new URLSearchParams({
         grant_type: 'password',
         username: USERNAME,
@@ -63,7 +65,10 @@ export default async function handler(req, res) {
         body
       });
       const data = await safeRead(r);
-      if (!r.ok) throw new Error('auth_failed_' + r.status);
+      if (!r.ok) {
+        log('password auth failed', r.status, data);
+        throw new Error('auth_failed_' + r.status);
+      }
       const ttl = (data.expires_in || 3600) * 1000;
       cached = {
         access_token: data.access_token,
@@ -73,14 +78,18 @@ export default async function handler(req, res) {
       return cached.access_token;
     }
 
+    // health-check (удобно для теста роутинга)
+    if (req.url.startsWith('/api/proxy/ping')) {
+      return res.status(200).json({ ok: true, ping: 'pong' });
+    }
+
     const token = await getToken();
 
-    // Хвост после /api/proxy/…
-    // Vercel кладёт его в req.query.path (массив сегментов)
+    // хвост после /api/proxy/…
     const suffix = '/' + (Array.isArray(req.query.path) ? req.query.path.join('/') : '');
-    const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    const query  = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
 
-    // Подменяем .../vX/employee/auto/... → .../vX/employee/{EMPLOYEE_ID}/...
+    // подмена .../vX/employee/auto/... → .../vX/employee/{EMPLOYEE_ID}/...
     const rewrittenPath = suffix.replace(
       /\/v(\d+)\/employee\/auto\//,
       (_m, v) => `/v${v}/employee/${EMPLOYEE_ID}/`
@@ -97,7 +106,7 @@ export default async function handler(req, res) {
     const r = await fetch(upstream, {
       method: req.method,
       headers,
-      body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
+      body: ['GET','HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
     });
 
     const body = await safeRead(r);

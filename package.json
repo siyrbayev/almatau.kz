@@ -1,26 +1,8 @@
 {
-  "name": "wipon-public-catalog",
-  "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n PROXY,WEB \"node server.js\" \"vite\"",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "proxy": "node server.js",
-    "start": "concurrently -k -n PROXY,WEB \"node server.js\" \"vite\"",
-    "start:prod": "npm run build && concurrently -k -n PROXY,WEB \"node server.js\" \"vite preview\""
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "node-fetch": "^3.3.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.2",
-    "concurrently": "^9.0.1",
-    "vite": "^5.4.0"
+    "vercel-dev": "vercel dev"
   }
 }
