@@ -13,11 +13,12 @@ app.use(cors({
   credentials: false,
 }));
 
-const API_BASE  = process.env.API_BASE  || 'https://api.wipon.kz';
-const AUTH_PATH = process.env.WIPON_AUTH_PATH || '/v1/oauth/token';
-const USERNAME  = process.env.WIPON_USER;
-const PASSWORD  = process.env.WIPON_PASS;
-const EMPLOYEE_ID = process.env.EMPLOYEE_ID;
+const API_BASE  = import.meta.env.API_BASE  || 'https://api.wipon.kz';
+const AUTH_PATH = import.meta.env.WIPON_AUTH_PATH || '/v1/oauth/token';
+const USERNAME  = import.meta.env.WIPON_USER;
+const PASSWORD  = import.meta.env.WIPON_PASS;
+const EMPLOYEE_ID = import.meta.env.EMPLOYEE_ID;
+
 
 let cached = null; // { access_token, refresh_token, expires_at }
 
