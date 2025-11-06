@@ -9,7 +9,7 @@ app.use(express.json());
 
 // Разрешите фронту
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://your-domain.tld'],
+  origin: ['https://api.wipon.kz', 'https://your-domain.tld'],
   credentials: false,
 }));
 

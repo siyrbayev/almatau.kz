@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5173,
     proxy: process.env.NODE_ENV === 'development' ? {
       '/proxy': {
-        target: 'http://localhost:8787',
+        target: 'https://api.wipon.kz7',
         changeOrigin: true,
         secure: false,
       },
