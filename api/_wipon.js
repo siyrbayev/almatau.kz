@@ -5,6 +5,7 @@ const EMPLOYEE_ID = process.env.EMPLOYEE_ID; // можно не использо
 
 const WIPON_USER = process.env.WIPON_USER;
 const WIPON_PASS = process.env.WIPON_PASS;
+const TOKEN = process.env.WIPON_TOKEN;
 
 // Глобальный кэш токена между инвокациями (пока контейнер «тёплый»)
 let cachedToken = null;
@@ -26,7 +27,11 @@ async function login() {
     url,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({ login: WIPON_USER, password: WIPON_PASS }),
+    body: JSON.stringify({
+      username: process.env.WIPON_USER,
+      password: process.env.WIPON_PASS,
+      grant_type: "password"
+    }),
   });
 
   if (!r.ok) {
