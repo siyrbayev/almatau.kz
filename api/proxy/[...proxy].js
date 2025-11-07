@@ -1,4 +1,4 @@
-// api/proxy/[...path].js
+// api/proxy/[...proxy].js — robust Vercel proxy for Wipon
 let cached = null; // { access_token, refresh_token, expires_at }
 
 const log = (...a) => console.log("[proxy]", ...a);
@@ -20,11 +20,19 @@ export default async function handler(req, res) {
     const PASSWORD    = process.env.WIPON_PASS;
     const EMPLOYEE_ID = process.env.EMPLOYEE_ID;
 
-    if (!USERNAME || !PASSWORD)
-      throw new Error("Missing WIPON_USER / WIPON_PASS");
+    // Health
+    if (req.url.startsWith("/api/proxy/ping")) {
+      return res.status(200).json({ ok: true, ping: "pong" });
+    }
+
+    if (!USERNAME || !PASSWORD) {
+      return res.status(500).json({ ok:false, message:"Missing WIPON_USER / WIPON_PASS in Vercel env."});
+    }
+    if (!EMPLOYEE_ID) {
+      return res.status(500).json({ ok:false, message:"Missing EMPLOYEE_ID in Vercel env. Add it in Project → Settings → Environment Variables."});
+    }
 
     async function getToken() {
-      
       if (cached?.expires_at && cached.expires_at > Date.now() + 15000)
         return cached.access_token;
 
@@ -40,7 +48,7 @@ export default async function handler(req, res) {
             body,
           });
           const t = await safeRead(r);
-          if (!r.ok) throw new Error("refresh_failed");
+          if (!r.ok) throw new Error("refresh_failed_" + r.status);
           const ttl = (t.expires_in || 3600) * 1000;
           cached = {
             access_token: t.access_token,
@@ -58,15 +66,15 @@ export default async function handler(req, res) {
         username: USERNAME,
         password: PASSWORD,
       });
-
       const r = await fetch(API_BASE + AUTH_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body,
       });
       const data = await safeRead(r);
-      if (!r.ok) throw new Error("auth_failed_" + r.status);
-
+      if (!r.ok) {
+        return res.status(401).json({ ok:false, message:"Auth failed to Wipon ("+r.status+")", details:data });
+      }
       const ttl = (data.expires_in || 3600) * 1000;
       cached = {
         access_token: data.access_token,
@@ -77,45 +85,43 @@ export default async function handler(req, res) {
       return cached.access_token;
     }
 
-    // health-check
-    if (req.url.startsWith("/api/proxy/ping"))
-    return res.status(200).json({ ok: true, ping: "pong" });
-
     const token = await getToken();
 
-    const segs = Array.isArray(req.query.proxy) ? req.query.proxy : [];
+    // Build upstream URL
+    const segs   = Array.isArray(req.query.proxy) ? req.query.proxy : [];
     const suffix = "/" + segs.join("/");
     const query  = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
-    const rewrittenPath = suffix.replace(
-      /\/v(\d+)\/employee\/auto\//,
-      (_m, v) => `/v${v}/employee/${EMPLOYEE_ID}/`
-    );
-    const upstream = API_BASE + rewrittenPath + query;
 
+    // Replace either /vX/employee/auto/.. OR /vX/employee/<id>/.. with the concrete EMPLOYEE_ID
+    const rewrittenPath = suffix.replace(
+      /\/v(\d+)\/employee\/(?:auto|\d+)\/(.*)$/,
+      (_m, v, rest) => `/v${v}/employee/${EMPLOYEE_ID}/${rest}`
+    );
+
+    const upstream = API_BASE + rewrittenPath + query;
+    log("→", req.method, upstream);
+
+    // Forward request
     const headers = {
       Authorization: "Bearer " + token,
       Accept: "application/json, text/plain, */*",
     };
-
     if (req.headers["content-type"])
       headers["Content-Type"] = req.headers["content-type"];
 
     const r = await fetch(upstream, {
       method: req.method,
       headers,
-      body: ["GET", "HEAD"].includes(req.method)
-        ? undefined
-        : JSON.stringify(req.body),
+      body: ["GET", "HEAD"].includes(req.method) ? undefined : JSON.stringify(req.body),
     });
 
     const body = await safeRead(r);
     res.status(r.status);
     res.setHeader("Content-Type", r.headers.get("content-type") || "application/json; charset=utf-8");
-
     if (typeof body === "string") return res.send(body);
-      return res.json(body);
-    } catch (e) {
-      log("error", e.message);
-      res.status(500).json({ ok: false, message: "Proxy error: " + e.message });
-    }
+    return res.json(body);
+  } catch (e) {
+    log("error", e.message);
+    res.status(500).json({ ok:false, message:"Proxy error: "+ e.message });
+  }
 }
