@@ -163,7 +163,7 @@ function useCategories(){
     for(const [k,v] of children.entries()) children.set(k,sort(v));
     return {roots:sort(roots), children, byId};
   },[categories]);
-  console.log('Categories data:', ...tree);
+  
   return {...tree, err, loading};
 }
 
@@ -202,7 +202,7 @@ function CategoriesPage({ go }){
   return (
     <div className="container" style={{margin: '0px -12px', backgroundColor: 'white'}}>
       <h1 className="text-15xl font-bold mb-10" >Категории товаров</h1>
-      
+
       {loading && <div style={{padding:20}}>Загрузка категорий...</div>}
       {err && <div className="help">{err}</div>}
       {!categories.length && <div style={{padding:20}}>Нет категорий</div>}
