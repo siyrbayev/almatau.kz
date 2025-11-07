@@ -24,6 +24,7 @@ export default async function handler(req, res) {
       throw new Error("Missing WIPON_USER / WIPON_PASS");
 
     async function getToken() {
+      
       if (cached?.expires_at && cached.expires_at > Date.now() + 15000)
         return cached.access_token;
 
@@ -57,6 +58,7 @@ export default async function handler(req, res) {
         username: USERNAME,
         password: PASSWORD,
       });
+
       const r = await fetch(API_BASE + AUTH_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -77,7 +79,7 @@ export default async function handler(req, res) {
 
     // health-check
     if (req.url.startsWith("/api/proxy/ping"))
-      return res.status(200).json({ ok: true, ping: "pong" });
+    return res.status(200).json({ ok: true, ping: "pong" });
 
     const token = await getToken();
 
@@ -93,6 +95,7 @@ export default async function handler(req, res) {
       Authorization: "Bearer " + token,
       Accept: "application/json, text/plain, */*",
     };
+
     if (req.headers["content-type"])
       headers["Content-Type"] = req.headers["content-type"];
 
@@ -107,10 +110,11 @@ export default async function handler(req, res) {
     const body = await safeRead(r);
     res.status(r.status);
     res.setHeader("Content-Type", r.headers.get("content-type") || "application/json; charset=utf-8");
+
     if (typeof body === "string") return res.send(body);
-    return res.json(body);
-  } catch (e) {
-    log("error", e.message);
-    res.status(500).json({ ok: false, message: "Proxy error: " + e.message });
-  }
+      return res.json(body);
+    } catch (e) {
+      log("error", e.message);
+      res.status(500).json({ ok: false, message: "Proxy error: " + e.message });
+    }
 }

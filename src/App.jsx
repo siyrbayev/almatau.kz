@@ -99,10 +99,23 @@ const MAX_CHILD_BATCH = 12; // how many subcats to aggregate when opening a pare
 
 // helpers
 const proxify = (path) => `${PROXY_BASE}/proxy${path}`;
-async function fetchJson(url){const r = await fetch(url,{headers:{Accept:"application/json"}}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json();}
-function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
-const fmtMoney=(v)=> v==null?"—": new Intl.NumberFormat('ru-RU').format(Number(v))+" ₸";
-const totalBalance=(it)=> Array.isArray(it.stocks)? it.stocks.reduce((s,x)=>s+num(x.balance),0): (it.balance ?? it.quantity ?? "—");
+
+async function fetchJson(url) {
+  const r = await fetch(url,{headers:{Accept:"application/json"}});
+   if(!r.ok) 
+    throw new Error(`HTTP ${r.status}`); 
+   return r.json();
+}
+
+function num(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+const fmtMoney = (v) => (v == null ? "—" : new Intl.NumberFormat("ru-RU").format(Number(v)) + " ₸");
+const totalBalance = (it) =>
+  Array.isArray(it.stocks)
+    ? it.stocks.reduce((s, x) => s + num(x.balance), 0)
+    : it.balance ?? it.quantity ?? "—";
 
 // ========================= ROUTER (hash-based) =========================
 function useHashRouter(){
@@ -114,8 +127,17 @@ function useHashRouter(){
     return {page:'categories'};
   },[]);
   const [route,setRoute]=useState(parse());
-  useEffect(()=>{const onHash=()=>setRoute(parse()); window.addEventListener('hashchange',onHash); return ()=>window.removeEventListener('hashchange',onHash);},[parse]);
-  const go=(page, params)=>{ if(page==='products') location.hash=`#products/${params.id}`; else if(page==='search') location.hash='#search'; else if(page==='debug') location.hash='#debug'; else location.hash='#'; };
+  useEffect(()=>{
+    const onHash=()=>setRoute(parse()); 
+    window.addEventListener('hashchange',onHash);
+    return ()=>window.removeEventListener('hashchange',onHash);
+  },[parse]);
+  const go=(page, params)=>{ 
+    if (page==='products') location.hash=`#products/${params.id}`; 
+    else if(page==='search') location.hash='#search'; 
+    else if(page==='debug') location.hash='#debug'; 
+    else location.hash='#'; 
+};
   return {route, go};
 }
 
@@ -127,13 +149,18 @@ function useCategories(){
   
   useEffect(()=>{(async()=>{
     try{
-      const qs=new URLSearchParams(); qs.set('all','1');
-      if (DEFAULT_STOCK_ID!=null) qs.set('stock_id',String(DEFAULT_STOCK_ID));
+      const qs=new URLSearchParams(); 
+      qs.set('all','1');
+      if (DEFAULT_STOCK_ID!=null) 
+        qs.set('stock_id',String(DEFAULT_STOCK_ID));
       const data=await fetchJson(proxify(`/v1/employee/auto/item-category?${qs.toString()}`));
       const list=Array.isArray(data.data)? data.data : (data?.data? [data.data] : []);
       setCategories(list);
-    }catch(e){ setErr(String(e?.message||e)); }
-    finally{ setLoading(false); }
+    } catch(e) { 
+      setErr(String(e?.message||e));
+    } finally {
+      setLoading(false);
+    }
   })();},[]);
 
   const tree = useMemo(()=>{
@@ -196,14 +223,6 @@ function CategoriesPage({ go }){
           const canOpenParent = num(parent.items_count) > 0 || childs.some(c=>num(c.items_count)>0);
           return (
             <div style={{marginTop:'1%'}}>
-            {/* <div key={parent.id} className="card"> */}
-              {/* <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,marginBottom:12}}> */}
-                {/* <div className="title" title={parent.title}>{parent.title}</div> */}
-                {/* <div className="badge">{parent.items_count ?? 0}</div> */}
-                {/* <button className="btn" disabled={!canOpenParent} onClick={()=> go('products',{id: parent.id})}>Открыть</button> */}
-                
-              {/* </div> */}
-
               {/* Плитки подкатегорий (как в макете) */}
               {childs.length>0 && (
                 <div key={parent.id}  className="card" style={{ borderColor: 'transparent', boxShadow: 'none', marginBottom: '24px' }}>
