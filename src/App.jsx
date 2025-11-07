@@ -92,13 +92,14 @@ document.head.appendChild(s);
 }
 
 // ========================= CONFIG (no secrets) =========================
-const PROXY_BASE = "/api"; // same-origin proxy
+const PROXY_BASE = "/api"; // было "/api"
+const proxify = (path) => path; // БЕЗ /proxy и без join — теперь прямые ручки
+
 const ONLY_POSITIVE_BALANCE = true;
 const DEFAULT_STOCK_ID = 83673;
 const MAX_CHILD_BATCH = 12; // how many subcats to aggregate when opening a parent
 
 // helpers
-const proxify = (path) => `${PROXY_BASE}/proxy${path}`;
 async function fetchJson(url){const r = await fetch(url,{headers:{Accept:"application/json"}}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json();}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
 const fmtMoney=(v)=> v==null?"—": new Intl.NumberFormat('ru-RU').format(Number(v))+" ₸";
@@ -129,7 +130,11 @@ function useCategories(){
     try{
       const qs=new URLSearchParams(); qs.set('all','1');
       if (DEFAULT_STOCK_ID!=null) qs.set('stock_id',String(DEFAULT_STOCK_ID));
-      const data=await fetchJson(proxify(`/v1/employee/auto/item-category?${qs.toString()}`));
+      
+      // const data=await fetchJson(proxify(`/v1/employee/auto/item-category?${qs.toString()}`));
+      const data = await fetchJson(`/api/categories?all=1&stock_id=${DEFAULT_STOCK_ID}`);
+
+
       const list=Array.isArray(data.data)? data.data : (data?.data? [data.data] : []);
       setCategories(list);
     }catch(e){ setErr(String(e?.message||e)); }
@@ -196,14 +201,6 @@ function CategoriesPage({ go }){
           const canOpenParent = num(parent.items_count) > 0 || childs.some(c=>num(c.items_count)>0);
           return (
             <div style={{marginTop:'1%'}}>
-            {/* <div key={parent.id} className="card"> */}
-              {/* <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,marginBottom:12}}> */}
-                {/* <div className="title" title={parent.title}>{parent.title}</div> */}
-                {/* <div className="badge">{parent.items_count ?? 0}</div> */}
-                {/* <button className="btn" disabled={!canOpenParent} onClick={()=> go('products',{id: parent.id})}>Открыть</button> */}
-                
-              {/* </div> */}
-
               {/* Плитки подкатегорий (как в макете) */}
               {childs.length>0 && (
                 <div key={parent.id}  className="card" style={{ borderColor: 'transparent', boxShadow: 'none', marginBottom: '24px' }}>
@@ -328,13 +325,20 @@ function ProductsPage({ go, categoryId }) {
       }
 
       const fetchOne = async (cid) => {
+        // const qs = new URLSearchParams();
+        // qs.set("item_category_id", String(cid));
+        // if (ONLY_POSITIVE_BALANCE) qs.set("positive_balance", "1");
+        // if (DEFAULT_STOCK_ID != null) qs.set("stock_id", String(DEFAULT_STOCK_ID));
+        // qs.set("per_page", String(perPage));
+        // qs.set("page", String(page));
+        // const data = await fetchJson(proxify(`/v2/employee/auto/item?${qs.toString()}`));
         const qs = new URLSearchParams();
         qs.set("item_category_id", String(cid));
-        if (ONLY_POSITIVE_BALANCE) qs.set("positive_balance", "1");
+        if (ONLY_POSITIVE_BALANCE) qs.set("positive_balance","true");
         if (DEFAULT_STOCK_ID != null) qs.set("stock_id", String(DEFAULT_STOCK_ID));
         qs.set("per_page", String(perPage));
         qs.set("page", String(page));
-        const data = await fetchJson(proxify(`/v2/employee/auto/item?${qs.toString()}`));
+        const data = await fetchJson(`/api/items?${qs.toString()}`);
         const arr = Array.isArray(data.data) ? data.data : data?.data ? [data.data] : [];
         return arr;
       };
@@ -492,16 +496,25 @@ function SearchPage(){
     setLoading(true);
     setErr(null);
     try{
-      const qs=new URLSearchParams();
-      if(title.trim()) qs.set('title',title.trim());
-      if(barcode.trim()) qs.set('barcode',barcode.trim());
-      if(vendor_code.trim()) qs.set('vendor_code',vendor_code.trim());
-      if(DEFAULT_STOCK_ID!=null) qs.set('stock_id',String(DEFAULT_STOCK_ID));
-      if(ONLY_POSITIVE_BALANCE) qs.set('positive_balance','1');
-      qs.set('page',String(reset?1:page));
-      qs.set('per_page',String(perPage));
-
-      const data=await fetchJson(proxify(`/v2/employee/auto/item?${qs.toString()}`));
+      // const qs=new URLSearchParams();
+      // if(title.trim()) qs.set('title',title.trim());
+      // if(barcode.trim()) qs.set('barcode',barcode.trim());
+      // if(vendor_code.trim()) qs.set('vendor_code',vendor_code.trim());
+      // if(DEFAULT_STOCK_ID!=null) qs.set('stock_id',String(DEFAULT_STOCK_ID));
+      // if(ONLY_POSITIVE_BALANCE) qs.set('positive_balance','1');
+      // qs.set('page',String(reset?1:page));
+      // qs.set('per_page',String(perPage));
+      // const data=await fetchJson(proxify(`/v2/employee/auto/item?${qs.toString()}`));
+      const qs = new URLSearchParams();
+      if (title.trim()) qs.set('title', title.trim());
+      if (barcode.trim()) qs.set('barcode', barcode.trim());
+      if (vendor_code.trim()) qs.set('vendor_code', vendor_code.trim());
+      if (DEFAULT_STOCK_ID!=null) qs.set('stock_id', String(DEFAULT_STOCK_ID));
+      if (ONLY_POSITIVE_BALANCE) qs.set('positive_balance','true');
+      qs.set('page', String(reset?1:page));
+      qs.set('per_page', String(perPage));
+      const data = await fetchJson(`/api/items?${qs.toString()}`);
+      
       const arr=Array.isArray(data.data)?data.data:(data?.data?[data.data]:[]);
       setItems(arr);
       setHasNext(arr.length>=perPage);
