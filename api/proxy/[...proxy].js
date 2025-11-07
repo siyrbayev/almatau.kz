@@ -71,7 +71,7 @@ export default async function handler(req, res) {
         refresh_token: data.refresh_token,
         expires_at: Date.now() + ttl,
       };
-      log("auth ok");
+      console.log("auth ok");
       return cached.access_token;
     }
 
@@ -81,6 +81,8 @@ export default async function handler(req, res) {
 
     const token = await getToken();
 
+    console.log("Token: ", token);
+    
     const suffix = "/" + (Array.isArray(req.query.path) ? req.query.path.join("/") : "");
     const query  = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
     const rewrittenPath = suffix.replace(
