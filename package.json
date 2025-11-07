@@ -5,6 +5,7 @@
     "preview": "vite preview",
     "vercel-dev": "vercel dev"
   },
+  
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.0",
     "react": "^19.2.0",
@@ -12,3 +13,4 @@
     "vite": "^7.2.2"
   }
 }
+
