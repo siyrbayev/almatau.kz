@@ -82,7 +82,7 @@ export default async function handler(req, res) {
     const token = await getToken();
 
     console.log("Token: ", token);
-    
+
     const suffix = "/" + (Array.isArray(req.query.path) ? req.query.path.join("/") : "");
     const query  = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
     const rewrittenPath = suffix.replace(
@@ -90,10 +90,10 @@ export default async function handler(req, res) {
       (_m, v) => `/v${v}/employee/${EMPLOYEE_ID}/`
     );
     const upstream = API_BASE + rewrittenPath + query;
+    console.log('→ rewrite', { suffix, rewrittenPath, query });
+    console.log('→ upstream', upstream);
+    console.log('→ employee_id', EMPLOYEE_ID);
 
-    console.log(req.method, EMPLOYEE_ID);
-    console.log(req.method, upstream);
-    console.log(req.method, rewrittenPath);
     const headers = {
       Authorization: "Bearer " + token,
       Accept: "application/json, text/plain, */*",
