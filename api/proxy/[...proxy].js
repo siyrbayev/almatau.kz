@@ -83,7 +83,8 @@ export default async function handler(req, res) {
 
     const token = await getToken();
 
-    const suffix = "/" + (Array.isArray(req.query.path) ? req.query.path.join("/") : "");
+    const segs = Array.isArray(req.query.proxy) ? req.query.proxy : [];
+    const suffix = "/" + segs.join("/");
     const query  = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
     const rewrittenPath = suffix.replace(
       /\/v(\d+)\/employee\/auto\//,

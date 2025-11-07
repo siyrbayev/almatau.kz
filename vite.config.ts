@@ -6,12 +6,18 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // перенаправляем /api на vercel dev (3000)
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            // Убираем ненужные заголовки, чтобы не получить 431
+            proxyReq.removeHeader('cookie')
+            proxyReq.removeHeader('authorization')
+          })
+        },
       },
     },
   },
   preview: { port: 5174 },
-});
+})
