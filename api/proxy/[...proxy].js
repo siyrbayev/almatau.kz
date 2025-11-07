@@ -1,4 +1,4 @@
-// api/proxy/[...proxy].js — robust Vercel proxy for Wipon
+// api/proxy/[...path].js
 let cached = null; // { access_token, refresh_token, expires_at }
 
 const log = (...a) => console.log("[proxy]", ...a);
@@ -20,17 +20,8 @@ export default async function handler(req, res) {
     const PASSWORD    = process.env.WIPON_PASS;
     const EMPLOYEE_ID = process.env.EMPLOYEE_ID;
 
-    // Health
-    if (req.url.startsWith("/api/proxy/ping")) {
-      return res.status(200).json({ ok: true, ping: "pong" });
-    }
-
-    if (!USERNAME || !PASSWORD) {
-      return res.status(500).json({ ok:false, message:"Missing WIPON_USER / WIPON_PASS in Vercel env."});
-    }
-    if (!EMPLOYEE_ID) {
-      return res.status(500).json({ ok:false, message:"Missing EMPLOYEE_ID in Vercel env. Add it in Project → Settings → Environment Variables."});
-    }
+    if (!USERNAME || !PASSWORD)
+      throw new Error("Missing WIPON_USER / WIPON_PASS");
 
     async function getToken() {
       if (cached?.expires_at && cached.expires_at > Date.now() + 15000)
@@ -48,7 +39,7 @@ export default async function handler(req, res) {
             body,
           });
           const t = await safeRead(r);
-          if (!r.ok) throw new Error("refresh_failed_" + r.status);
+          if (!r.ok) throw new Error("refresh_failed");
           const ttl = (t.expires_in || 3600) * 1000;
           cached = {
             access_token: t.access_token,
@@ -72,9 +63,8 @@ export default async function handler(req, res) {
         body,
       });
       const data = await safeRead(r);
-      if (!r.ok) {
-        return res.status(401).json({ ok:false, message:"Auth failed to Wipon ("+r.status+")", details:data });
-      }
+      if (!r.ok) throw new Error("auth_failed_" + r.status);
+
       const ttl = (data.expires_in || 3600) * 1000;
       cached = {
         access_token: data.access_token,
@@ -85,23 +75,20 @@ export default async function handler(req, res) {
       return cached.access_token;
     }
 
+    // health-check
+    if (req.url.startsWith("/api/proxy/ping"))
+      return res.status(200).json({ ok: true, ping: "pong" });
+
     const token = await getToken();
 
-    // Build upstream URL
-    const segs   = Array.isArray(req.query.proxy) ? req.query.proxy : [];
-    const suffix = "/" + segs.join("/");
+    const suffix = "/" + (Array.isArray(req.query.path) ? req.query.path.join("/") : "");
     const query  = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
-
-    // Replace either /vX/employee/auto/.. OR /vX/employee/<id>/.. with the concrete EMPLOYEE_ID
     const rewrittenPath = suffix.replace(
-      /\/v(\d+)\/employee\/(?:auto|\d+)\/(.*)$/,
-      (_m, v, rest) => `/v${v}/employee/${EMPLOYEE_ID}/${rest}`
+      /\/v(\d+)\/employee\/auto\//,
+      (_m, v) => `/v${v}/employee/${EMPLOYEE_ID}/`
     );
-
     const upstream = API_BASE + rewrittenPath + query;
-    log("→", req.method, upstream);
 
-    // Forward request
     const headers = {
       Authorization: "Bearer " + token,
       Accept: "application/json, text/plain, */*",
@@ -112,7 +99,9 @@ export default async function handler(req, res) {
     const r = await fetch(upstream, {
       method: req.method,
       headers,
-      body: ["GET", "HEAD"].includes(req.method) ? undefined : JSON.stringify(req.body),
+      body: ["GET", "HEAD"].includes(req.method)
+        ? undefined
+        : JSON.stringify(req.body),
     });
 
     const body = await safeRead(r);
@@ -122,6 +111,6 @@ export default async function handler(req, res) {
     return res.json(body);
   } catch (e) {
     log("error", e.message);
-    res.status(500).json({ ok:false, message:"Proxy error: "+ e.message });
+    res.status(500).json({ ok: false, message: "Proxy error: " + e.message });
   }
 }
