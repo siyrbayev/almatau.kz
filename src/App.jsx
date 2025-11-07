@@ -134,6 +134,7 @@ function useCategories(){
       // const data=await fetchJson(proxify(`/v1/employee/auto/item-category?${qs.toString()}`));
       const data = await fetchJson(`/api/categories?all=1&stock_id=${DEFAULT_STOCK_ID}`);
 
+      console.log('Categories data:', data);
 
       const list=Array.isArray(data.data)? data.data : (data?.data? [data.data] : []);
       setCategories(list);
@@ -514,7 +515,7 @@ function SearchPage(){
       qs.set('page', String(reset?1:page));
       qs.set('per_page', String(perPage));
       const data = await fetchJson(`/api/items?${qs.toString()}`);
-      
+
       const arr=Array.isArray(data.data)?data.data:(data?.data?[data.data]:[]);
       setItems(arr);
       setHasNext(arr.length>=perPage);
@@ -673,19 +674,26 @@ function SearchPage(){
 }
 
 function DebugPage(){
-  const [catRaw,setCatRaw]=useState(null); const [itemsRaw,setItemsRaw]=useState(null);
-  const run=useCallback(async()=>{
-    try{const q1=new URLSearchParams(); q1.set('all','1'); if(DEFAULT_STOCK_ID!=null) q1.set('stock_id',String(DEFAULT_STOCK_ID)); setCatRaw(await fetchJson(proxify(`/v1/employee/auto/item-category?${q1.toString()}`)));}catch(e){setCatRaw({error:String(e?.message||e)})}
-    try{const q2=new URLSearchParams(); if(DEFAULT_STOCK_ID!=null) q2.set('stock_id',String(DEFAULT_STOCK_ID)); q2.set('per_page','1'); setItemsRaw(await fetchJson(proxify(`/v2/employee/auto/item?${q2.toString()}`)));}catch(e){setItemsRaw({error:String(e?.message||e)})}
-  },[]);
-  useEffect(()=>{run();},[run]);
-  return (
-    <div className="container">
-      <h1 className="text-2xl font-bold mb-4">Debug</h1>
-      <button className="btn" onClick={run}>Обновить</button>
-      <pre className="panel" style={{whiteSpace:'pre-wrap',marginTop:12}}>{JSON.stringify({categories:catRaw, items:itemsRaw}, null, 2)}</pre>
-    </div>
-  );
+  const run = useCallback(async () => {
+  try {
+    const q1 = new URLSearchParams();
+    q1.set('all','1');
+    if (DEFAULT_STOCK_ID != null) q1.set('stock_id', String(DEFAULT_STOCK_ID));
+    setCatRaw(await fetchJson(`/api/categories?${q1.toString()}`));
+  } catch (e) {
+    setCatRaw({ error: String(e?.message || e) });
+  }
+
+  try {
+    const q2 = new URLSearchParams();
+    if (DEFAULT_STOCK_ID != null) q2.set('stock_id', String(DEFAULT_STOCK_ID));
+    q2.set('per_page','1');
+    setItemsRaw(await fetchJson(`/api/items?${q2.toString()}`));
+  } catch (e) {
+    setItemsRaw({ error: String(e?.message || e) });
+  }
+}, []);
+
 }
 
 // ========================= APP =========================
