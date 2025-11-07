@@ -15,8 +15,8 @@ async function getWiponToken() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      login: process.env.WIPON_LOGIN,
-      password: process.env.WIPON_PASSWORD
+      login: process.env.WIPON_USER,
+      password: process.env.WIPON_PASS
     })
   })
 
