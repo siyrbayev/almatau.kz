@@ -1,17 +1,44 @@
 // api/items.js
-import { EMPLOYEE, callWipon } from './_wipon.js';
+const { wiponFetch, EMPLOYEE_ID } = require('./_wipon');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
-    const q = new URL(req.url, 'http://x').searchParams;
-    const queryObj = Object.fromEntries(q.entries());
+    const base = `http://${req.headers.host || 'x'}`;
+    const q = new URL(req.url, base).searchParams;
+    const query = Object.fromEntries(q.entries());
 
-    const path = `/v2/employee/${EMPLOYEE}/item`;
-    const response = await callWipon(path, queryObj);
+    const {
+      item_category_id,
+      title,
+      barcode,
+      vendor_code,
+      stock_id,
+      positive_balance,
+      page = '1',
+      per_page = '20',
+    } = query;
 
-    res.status(response.status).setHeader('Content-Type','application/json');
-    res.send(await response.text());
+    const path = EMPLOYEE_ID
+      ? `/v2/employee/${EMPLOYEE_ID}/item`
+      : `/v2/employee/auto/item`;
+
+    const data = await wiponFetch(path, {
+      query: {
+        item_category_id,
+        title,
+        barcode,
+        vendor_code,
+        stock_id,
+        positive_balance,
+        page,
+        per_page,
+      },
+    });
+
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.status(200).json({ ok: true, data });
   } catch (e) {
-    res.status(500).json({ ok:false, error: String(e?.message || e) });
+    console.error('items error:', e);
+    res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
-}
+};
