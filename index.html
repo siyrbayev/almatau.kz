@@ -1,12 +1,24 @@
 <!doctype html>
-<html lang="ru">
+<html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wipon Public Catalog</title>
+    <title>Ping test</title>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <h1>Категории товаров</h1>
+    <pre id="out">Жду ping…</pre>
+    <script type="module">
+      async function run() {
+        const el = document.getElementById('out');
+        try {
+          const r = await fetch('/api/ping');
+          el.textContent = r.ok ? await r.text() : `HTTP ${r.status}`;
+        } catch (e) {
+          el.textContent = 'Ошибка: ' + e.message;
+        }
+      }
+      run();
+    </script>
   </body>
 </html>
