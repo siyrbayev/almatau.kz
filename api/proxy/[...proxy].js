@@ -92,10 +92,22 @@ export default async function handler(req, res) {
       /\/v(\d+)\/employee\/auto\//,
       (_m, v) => `/v${v}/employee/${EMPLOYEE_ID}/`
     );
+    if (req.query.__debug === '1') {
+      return res.status(200).json({
+        ok: true,
+        upstream,
+        rewrittenPath,
+        employee_id: EMPLOYEE_ID,
+      });
+    }
     const upstream = API_BASE + rewrittenPath + query;
-    console.log('→ rewrite', { suffix, rewrittenPath, query });
-    console.log('→ upstream', upstream);
-    console.log('→ employee_id', EMPLOYEE_ID);
+    res.setHeader("x-proxy-upstream", upstream);
+
+    // СРАЗУ ПОСЛЕ fetch(...):
+    res.setHeader("x-proxy-status", String(r.status));
+
+    // В catch:
+    res.setHeader("x-proxy-error", String(e?.message || e));
 
     const headers = {
       Authorization: "Bearer " + token,
