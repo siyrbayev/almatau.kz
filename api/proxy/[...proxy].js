@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     const AUTH_PATH   = process.env.WIPON_AUTH_PATH || "/v1/oauth/token";
     const USERNAME    = process.env.WIPON_USER;
     const PASSWORD    = process.env.WIPON_PASS;
-    const EMPLOYEE_ID = process.env.EMPLOYEE_ID;
+    const EMPLOYEE_ID = process.env.EMPLOYEE_ID || "49647";
 
     if (!USERNAME || !PASSWORD)
       throw new Error("Missing WIPON_USER / WIPON_PASS");
@@ -89,6 +89,7 @@ export default async function handler(req, res) {
     );
     const upstream = API_BASE + rewrittenPath + query;
 
+    log(req.method, upstream);
     const headers = {
       Authorization: "Bearer " + token,
       Accept: "application/json, text/plain, */*",
