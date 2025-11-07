@@ -126,30 +126,44 @@ function useCategories(){
   const [err,setErr]=useState(null);
   const [loading,setLoading]=useState(true);
   
-  useEffect(()=>{(async()=>{
-    try{
-      const qs=new URLSearchParams(); qs.set('all','1');
-      if (DEFAULT_STOCK_ID!=null) qs.set('stock_id',String(DEFAULT_STOCK_ID));
-      
-      // const data=await fetchJson(proxify(`/v1/employee/auto/item-category?${qs.toString()}`));
-      const data = await fetchJson(`/api/categories?all=1&stock_id=${DEFAULT_STOCK_ID}`);
-
-      console.log('Categories data:', data);
-
-      const list=Array.isArray(data.data)? data.data : (data?.data? [data.data] : []);
-      setCategories(list);
-    }catch(e){ setErr(String(e?.message||e)); }
-    finally{ setLoading(false); }
-  })();},[]);
+  useEffect(()=>{
+    (async()=>{
+      try{
+        const qs=new URLSearchParams(); qs.set('all','1');
+        if (DEFAULT_STOCK_ID!=null) qs.set('stock_id',String(DEFAULT_STOCK_ID));
+        // const data=await fetchJson(proxify(`/v1/employee/auto/item-category?${qs.toString()}`));
+        const data = await fetchJson(`/api/categories?all=1&stock_id=${DEFAULT_STOCK_ID}`);
+        console.log('Categories data:', data);
+        const list=Array.isArray(data.data)? data.data : (data?.data? [data.data] : []);
+        setCategories(list);
+      } catch(e) {
+        setErr(String(e?.message||e));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const tree = useMemo(()=>{
-    const roots=[]; const children=new Map(); const byId=new Map();
-    for(const c of categories){byId.set(c.id,c); if(c.parent_id==null) roots.push(c); else { if(!children.has(c.parent_id)) children.set(c.parent_id,[]); children.get(c.parent_id).push(c);} }
+    const roots=[]; 
+    const children=new Map(); 
+    const byId=new Map();
+    
+    for(const c of categories){
+      byId.set(c.id,c); 
+      if (c.parent_id==null)
+         roots.push(c); 
+      else { 
+        if(!children.has(c.parent_id)) 
+          children.set(c.parent_id,[]); 
+          children.get(c.parent_id).push(c);
+      } 
+  }
     const sort=(a)=>a.slice().sort((x,y)=> (x.position??0)-(y.position??0) || String(x.title).localeCompare(String(y.title)));
     for(const [k,v] of children.entries()) children.set(k,sort(v));
     return {roots:sort(roots), children, byId};
   },[categories]);
-
+  console.log('Categories data:', ...tree);
   return {...tree, err, loading};
 }
 
@@ -188,7 +202,10 @@ function CategoriesPage({ go }){
   return (
     <div className="container" style={{margin: '0px -12px', backgroundColor: 'white'}}>
       <h1 className="text-15xl font-bold mb-10" >Категории товаров</h1>
+      
+      {loading && <div style={{padding:20}}>Загрузка категорий...</div>}
       {err && <div className="help">{err}</div>}
+      {!categories.length && <div style={{padding:20}}>Нет категорий</div>}
 
       {loading && !err && (
         <>
