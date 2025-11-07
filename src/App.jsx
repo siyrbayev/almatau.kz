@@ -201,12 +201,15 @@ function CategoriesPage({ go }){
           const childs = children.get(parent.id)||[];
           const canOpenParent = num(parent.items_count) > 0 || childs.some(c=>num(c.items_count)>0);
           return (
-            <div style={{marginTop:'1%'}}>
+            // Это есть в верстке
+            <div key={parent.id} style={{ marginTop: '1%' }}>
               {/* Плитки подкатегорий (как в макете) */}
+              {console.debug('[CATS]', parent.id, parent.title, 'childs:', childs.length)}
               {childs.length>0 && (
                 <div key={parent.id}  className="card" style={{ borderColor: 'transparent', boxShadow: 'none', marginBottom: '24px' }}>
                   <div className="title" style={{ marginBottom: '24px', color: '#4f4f4f'}} title={parent.title}>{parent.title}</div>
                   <div className="child-grid" style={{ margin: '-12px' }}>
+                    
                     {childs.map(ch => {
                       const disabled = !(num(ch.items_count) > 0);
                       const imgUrl = getCategoryImageUrl(ch);
