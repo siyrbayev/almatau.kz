@@ -1,77 +1,89 @@
 // api/_wipon.js
-const AUTH_URL  = process.env.WIPON_AUTH_PATH || 'https://wipon.api.kz/v1/auth';
-const API_BASE  = process.env.API_BASE        || 'https://wipon.api.kz';
-const EMPLOYEE  = process.env.EMPLOYEE_ID;
+const API_BASE = process.env.API_BASE || 'https://wipon.api.kz';
+const AUTH_PATH = process.env.WIPON_AUTH_PATH || '/v1/oauth/token';
+const EMPLOYEE_ID = process.env.EMPLOYEE_ID; // можно не использовать, если "auto"
 
-if (!process.env.WIPON_USER || !process.env.WIPON_PASS || !EMPLOYEE) {
-  console.warn('[WIPON] Missing envs: WIPON_USER / WIPON_PASS / EMPLOYEE_ID');
+const WIPON_USER = process.env.WIPON_USER;
+const WIPON_PASS = process.env.WIPON_PASS;
+
+// Глобальный кэш токена между инвокациями (пока контейнер «тёплый»)
+let cachedToken = null;
+let tokenExpAt = 0;
+
+function withTimeout(ms, p) {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), ms);
+  return fetch(p.url, { ...p, signal: ac.signal }).finally(() => clearTimeout(t));
 }
 
-let tokenCache = { value: null, exp: 0 };
-
-async function fetchJSON(url, opts = {}) {
-  const r = await fetch(url, opts);
-  if (!r.ok) {
-    const text = await r.text().catch(()=>'');
-    throw new Error(`HTTP ${r.status} ${r.statusText}: ${text}`);
+async function login() {
+  if (!WIPON_USER || !WIPON_PASS) {
+    throw new Error('Missing env WIPON_USER or WIPON_PASS');
   }
-  return r.json();
-}
 
-async function getToken(force = false) {
-  const now = Date.now();
-  if (!force && tokenCache.value && tokenCache.exp > now) return tokenCache.value;
-
-  const body = JSON.stringify({
-    login: process.env.WIPON_USER,
-    password: process.env.WIPON_PASS,
-  });
-
-  const data = await fetchJSON(AUTH_URL, {
+  const url = API_BASE + AUTH_PATH;
+  const r = await withTimeout(8000, {
+    url,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body
+    body: JSON.stringify({ login: WIPON_USER, password: WIPON_PASS }),
   });
 
-  const token = data?.data?.token || data?.token;
-  if (!token) throw new Error('Auth failed: no token');
+  if (!r.ok) {
+    const text = await r.text().catch(() => '');
+    throw new Error(`Auth failed ${r.status}. ${text?.slice(0, 200)}`);
+  }
+  const data = await r.json();
 
-  tokenCache = { value: token, exp: now + 50 * 60 * 1000 }; // ~50 мин
+  // Подстраиваемся под формат (часто token лежит в data.token / token / access_token)
+  const token = data?.data?.token || data?.token || data?.access_token;
+  if (!token) throw new Error('Auth response has no token');
+
+  // TTL: если пришёл expires_in — используем; иначе на 50 минут
+  const ttl = Number(data?.expires_in || 3000); // секунд
+  tokenExpAt = Date.now() + Math.max(30_000, ttl * 1000 - 60_000);
+  cachedToken = token;
   return token;
 }
 
-async function callWipon(path, queryObj) {
-  const qs = new URLSearchParams(queryObj || {});
-  const url = `${API_BASE}${path}?${qs.toString()}`;
-
-  let token = await getToken();
-  let res = await fetch(url, {
-    headers: {
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  // если токен протух — обновим и повторим
-  if (res.status === 401) {
-    token = await getToken(true);
-    res = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }
-    });
-  }
-
-  if (!res.ok) {
-    const text = await res.text().catch(()=> '');
-    return new Response(text || JSON.stringify({ ok:false, status:res.status }), { status: res.status });
-  }
-  const data = await res.json();
-  return new Response(JSON.stringify(data), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' }
-  });
+async function getToken() {
+  if (cachedToken && Date.now() < tokenExpAt) return cachedToken;
+  return login();
 }
 
-export { EMPLOYEE, callWipon };
+// Универсальный ход в Wipon с автологином
+async function wiponFetch(path, { query = {}, method = 'GET', body } = {}) {
+  const u = new URL(API_BASE + path);
+  Object.entries(query).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') u.searchParams.set(k, String(v));
+  });
+
+  const token = await getToken();
+
+  const r = await withTimeout(10_000, {
+    url: u.toString(),
+    method,
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': body ? 'application/json' : undefined,
+      'Authorization': `Bearer ${token}`,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (r.status === 401 || r.status === 403) {
+    // пробуем разлогиниться и логин заново (токен протух)
+    cachedToken = null;
+    await getToken();
+    throw new Error(`Wipon responded ${r.status} (auth). Try again.`);
+  }
+
+  if (!r.ok) {
+    const text = await r.text().catch(() => '');
+    throw new Error(`Wipon error ${r.status}: ${text?.slice(0, 300)}`);
+  }
+
+  return r.json();
+}
+
+module.exports = { wiponFetch, EMPLOYEE_ID };
