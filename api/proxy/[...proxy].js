@@ -89,7 +89,9 @@ export default async function handler(req, res) {
     );
     const upstream = API_BASE + rewrittenPath + query;
 
-    log(req.method, upstream);
+    console.log(req.method, EMPLOYEE_ID);
+    console.log(req.method, upstream);
+    console.log(req.method, rewrittenPath);
     const headers = {
       Authorization: "Bearer " + token,
       Accept: "application/json, text/plain, */*",
