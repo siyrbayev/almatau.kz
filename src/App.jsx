@@ -198,9 +198,6 @@ function CategoriesPage({ go }){
       {!loading && (
       <div>
         {roots.map((parent)=>{
-          if (loading) return <div style={{padding:20}}>Загрузка категорий...</div>;
-          if (err) return <div style={{padding:20, color:'red'}}>Ошибка: {err}</div>;
-          if (!categories.length) return <div style={{padding:20}}>Нет категорий</div>;
           const childs = children.get(parent.id)||[];
           const canOpenParent = num(parent.items_count) > 0 || childs.some(c=>num(c.items_count)>0);
           return (
