@@ -8,7 +8,8 @@ async function getWiponToken() {
   if (cachedToken && now < tokenExpires) {
     return cachedToken
   }
-
+  console.log("🔐 Login:", process.env.WIPON_USER);
+    console.log("🔐 Pass:", process.env.WIPON_PASS ? "set ✅" : "not set ❌");
   console.log('⏳ Получаю новый токен от Wipon...')
 
   const res = await fetch('https://wipon.api.kz/v1/auth/login', {
@@ -38,7 +39,8 @@ export async function wiponFetch(path, params = {}) {
   const token = await getWiponToken()
   const base = 'https://wipon.api.kz'
   const url = `${base}${path}`
-
+  console.log("🔐 Login:", process.env.WIPON_USER);
+  console.log("🔐 Pass:", process.env.WIPON_PASS ? "set ✅" : "not set ❌");
   const res = await fetch(url, {
     ...params,
     headers: {
