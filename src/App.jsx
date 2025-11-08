@@ -137,7 +137,9 @@ function useCategories(){
       console.log('Categories data:', data);
 
       const list=Array.isArray(data.data)? data.data : (data?.data? [data.data] : []);
+      console.log("✅ Ответ от API:", data);
       setCategories(list);
+      console.log("📦 Загружено категорий:", list.length, list.slice(0, 5));
     }catch(e){ setErr(String(e?.message||e)); }
     finally{ setLoading(false); }
   })();},[]);
@@ -147,6 +149,7 @@ function useCategories(){
     for(const c of categories){byId.set(c.id,c); if(c.parent_id==null) roots.push(c); else { if(!children.has(c.parent_id)) children.set(c.parent_id,[]); children.get(c.parent_id).push(c);} }
     const sort=(a)=>a.slice().sort((x,y)=> (x.position??0)-(y.position??0) || String(x.title).localeCompare(String(y.title)));
     for(const [k,v] of children.entries()) children.set(k,sort(v));
+    console.log("🌳 ROOTS:", roots.length, "CHILDREN:", children.size);
     return {roots:sort(roots), children, byId};
   },[categories]);
 
@@ -197,6 +200,8 @@ function CategoriesPage({ go }){
       )}
       {!loading && (
       <div>
+        {loading && <div>Загрузка категорий...</div>}
+        {!loading && !roots.length && <div>Нет категорий (roots пустой)</div>}
         {roots.map((parent)=>{
           const childs = children.get(parent.id)||[];
           const canOpenParent = num(parent.items_count) > 0 || childs.some(c=>num(c.items_count)>0);
