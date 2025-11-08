@@ -478,10 +478,10 @@ function ProductsPage({ go, categoryId }) {
                   </div>
                 )}
               </div>
-              <div className="title" title={it.title || it.name}>{it.title || it.name || `#${it.id}`}</div>
-              <div className="badge">Штрихкод: {it.barcode ?? it.barcode}</div>
-              <div className="badge">Цена: {fmtMoney(it.selling_price ?? it.price)}</div>
-              <div className="badge">Остаток: {totalBalance(it)<0 ? "Тауардың бар-жоғын сұраңыз" : totalBalance(it)} {it.unit_name}</div>
+              <div className="title">{it.title||it.name}</div>
+              <div className="badge">Штрихкод: {it.barcode}</div>
+              <div className="badge"><text style={{ fontSize: '24px', fontWeight: 'bold', color: totalBalance(it)>0 ? 'green' : 'gray'}}>{fmtMoney(it.selling_price ?? it.price)}</text></div>
+              <div className="badge"><text style={{color: totalBalance(it)>0 ? 'inherit' : 'red'}}>{totalBalance(it) > 0 ? totalBalance(it)+" "+it.unit_name : "Бар-жоғын білу"}</text></div>
             </div>
           ))}
         </div>
