@@ -676,6 +676,7 @@ function SearchPage(){
                   '🛒'
                 }
               </div>
+              <div>
                 <div style={{justifyContent:'space-between'}}>
                   <div className="title" style={{minHeight:'18px'}}>{it.title||it.name}</div>
                 </div>
