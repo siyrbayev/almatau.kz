@@ -380,7 +380,7 @@ function ProductsPage({ go, categoryId }) {
         qs.set("page", String(page));
 
         const data = await fetchJson(`/api/items?${qs.toString()}`);
-        const arr = Array.isArray(data.data) ? data.data : data?.data ? [data.data] : [];
+        const arr = Array.isArray(data?.data?.data) ? data.data.data : [];
 
         return arr;
       };
@@ -557,7 +557,7 @@ function SearchPage(){
       qs.set('per_page', String(perPage));
       const data = await fetchJson(`/api/items?${qs.toString()}`);
 
-      const arr=Array.isArray(data.data)?data.data:(data?.data?[data.data]:[]);
+      const arr = Array.isArray(data?.data?.data) ? data.data.data : [];
       setItems(arr);
       setHasNext(arr.length>=perPage);
       if(reset) setPage(1);
