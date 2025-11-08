@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
       barcode,
       vendor_code,
       stock_id,
-      positive_balance,
+      positive_balance = true,
       page = '1',
       per_page = '20',
     } = query;
