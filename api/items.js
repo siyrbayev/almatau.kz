@@ -12,14 +12,14 @@ module.exports = async function handler(req, res) {
     } else if (query.positive_balance === 'false' || query.positive_balance === '0') {
       query.positive_balance = 0;
     }
-    
+
     const {
       item_category_id,
       title,
       barcode,
       vendor_code,
       stock_id,
-      positive_balance = true,
+      positive_balance,
       page = '1',
       per_page = '20',
     } = query;
