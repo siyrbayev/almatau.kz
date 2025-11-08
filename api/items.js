@@ -7,6 +7,12 @@ module.exports = async function handler(req, res) {
     const q = new URL(req.url, base).searchParams;
     const query = Object.fromEntries(q.entries());
 
+    if (query.positive_balance === 'true' || query.positive_balance === '1') {
+      query.positive_balance = 1;
+    } else if (query.positive_balance === 'false' || query.positive_balance === '0') {
+      query.positive_balance = 0;
+    }
+    
     const {
       item_category_id,
       title,

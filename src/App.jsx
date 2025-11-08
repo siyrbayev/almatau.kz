@@ -369,14 +369,19 @@ function ProductsPage({ go, categoryId }) {
         // qs.set("per_page", String(perPage));
         // qs.set("page", String(page));
         // const data = await fetchJson(proxify(`/v2/employee/auto/item?${qs.toString()}`));
+
         const qs = new URLSearchParams();
         qs.set("item_category_id", String(cid));
-        if (ONLY_POSITIVE_BALANCE) qs.set("positive_balance","true");
+
+        // if (ONLY_POSITIVE_BALANCE) qs.set("positive_balance","true");
         if (DEFAULT_STOCK_ID != null) qs.set("stock_id", String(DEFAULT_STOCK_ID));
+
         qs.set("per_page", String(perPage));
         qs.set("page", String(page));
+
         const data = await fetchJson(`/api/items?${qs.toString()}`);
         const arr = Array.isArray(data.data) ? data.data : data?.data ? [data.data] : [];
+
         return arr;
       };
 
@@ -547,7 +552,7 @@ function SearchPage(){
       if (barcode.trim()) qs.set('barcode', barcode.trim());
       if (vendor_code.trim()) qs.set('vendor_code', vendor_code.trim());
       if (DEFAULT_STOCK_ID!=null) qs.set('stock_id', String(DEFAULT_STOCK_ID));
-      if (ONLY_POSITIVE_BALANCE) qs.set('positive_balance','true');
+      // if (ONLY_POSITIVE_BALANCE) qs.set('positive_balance','true');
       qs.set('page', String(reset?1:page));
       qs.set('per_page', String(perPage));
       const data = await fetchJson(`/api/items?${qs.toString()}`);
