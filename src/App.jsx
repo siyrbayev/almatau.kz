@@ -129,6 +129,7 @@ function useCategories(){
   useEffect(()=>{(async()=>{
     try{
       const qs=new URLSearchParams(); qs.set('all','1');
+
       if (DEFAULT_STOCK_ID!=null) qs.set('stock_id',String(DEFAULT_STOCK_ID));
       
       // const data=await fetchJson(proxify(`/v1/employee/auto/item-category?${qs.toString()}`));
@@ -136,19 +137,48 @@ function useCategories(){
 
       console.log('Categories data:', data);
 
-      const list=Array.isArray(data.data)? data.data : (data?.data? [data.data] : []);
+      const list =
+      Array.isArray(data?.data?.data) ? data.data.data :
+      Array.isArray(data?.data)      ? data.data      :
+      Array.isArray(data)            ? data           : [];
+
       console.log("✅ Ответ от API:", data);
+
       setCategories(list);
+
       console.log("📦 Загружено категорий:", list.length, list.slice(0, 5));
-    }catch(e){ setErr(String(e?.message||e)); }
-    finally{ setLoading(false); }
+
+    } catch(e) { 
+      setErr(String(e?.message||e));
+    } finally { 
+      setLoading(false);
+    }
   })();},[]);
 
   const tree = useMemo(()=>{
-    const roots=[]; const children=new Map(); const byId=new Map();
-    for(const c of categories){byId.set(c.id,c); if(c.parent_id==null) roots.push(c); else { if(!children.has(c.parent_id)) children.set(c.parent_id,[]); children.get(c.parent_id).push(c);} }
+    const roots=[]; 
+    const children=new Map(); 
+    const byId=new Map();
+
+    // 1) безопасный обход массива категорий
+    for (const c of (categories || [])) {
+      byId.set(c.id, c);
+
+      if (c.parent_id == null) {
+        roots.push(c);
+      } else {
+        // 2) явные скобки, чтобы push точно был внутри ветки
+        if (!children.has(c.parent_id)) {
+          children.set(c.parent_id, []);
+        }
+        children.get(c.parent_id).push(c);
+      }
+    }
+
     const sort=(a)=>a.slice().sort((x,y)=> (x.position??0)-(y.position??0) || String(x.title).localeCompare(String(y.title)));
+
     for(const [k,v] of children.entries()) children.set(k,sort(v));
+
     console.log("🌳 ROOTS:", roots.length, "CHILDREN:", children.size);
     return {roots:sort(roots), children, byId};
   },[categories]);
