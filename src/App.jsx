@@ -678,8 +678,8 @@ function SearchPage(){
               </div>
               <div className="title">{it.title||it.name}</div>
               <div className="badge">Штрихкод: {it.barcode}</div>
-              <div className="badge">Цена: {fmtMoney(it.selling_price ?? it.price)}</div>
-              <div className="badge">Остаток: {totalBalance(it)<0 ? "Тауардың бар-жоғын сұраңыз" : totalBalance(it)} {it.unit_name}</div>
+              <div className="badge">Цена: <h2 style={{color: totalBalance(it)<0 ? 'green' : 'inherit'}} >{fmtMoney(it.selling_price ?? it.price)}</p></div>
+              <div className="badge" >Остаток: <p style={{color: totalBalance(it)<0 ? 'green' : 'inherit'}}>{totalBalance(it)<0 ? "Тауардың бар-жоғын сұраңыз" : totalBalance(it)} {it.unit_name}</p></div>
             </div>
           ))}
         </div>
