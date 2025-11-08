@@ -676,10 +676,15 @@ function SearchPage(){
                   '🛒'
                 }
               </div>
-              <div className="title">{it.title||it.name}</div>
-              <div className="badge">Штрихкод: {it.barcode}</div>
-              <div className="badge">Цена: <text style={{ fontSize: '24px', fontWeight: 'bold', color: totalBalance(it)>0 ? 'green' : 'gray'}}>{fmtMoney(it.selling_price ?? it.price)}</text></div>
-              <div className="badge" >Остаток: <text style={{color: totalBalance(it)>0 ? 'green' : 'gray'}}>{totalBalance(it)<0 ? "Тауардың бар-жоғын сұраңыз" : totalBalance(it)} {it.unit_name}</text></div>
+                <div style={{justifyContent:'space-between'}}>
+                  <div className="title" style={{minHeight:'18px'}}>{it.title||it.name}</div>
+                </div>
+                <div>
+                  <div className="badge">Штрихкод: {it.barcode}</div>
+                  <div className="badge"><text style={{ fontSize: '24px', fontWeight: 'bold', color: totalBalance(it)>0 ? 'green' : 'gray'}}>{fmtMoney(it.selling_price ?? it.price)}</text></div>
+                  <div className="badge"><text style={{color: totalBalance(it)>0 ? 'inherit' : 'red'}}>{totalBalance(it)<0 ? "Бар-жоғын білу" : totalBalance(it)+" "+it.unit_name}</text></div>
+                </div>
+              </div>
             </div>
           ))}
         </div>
