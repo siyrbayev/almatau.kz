@@ -103,7 +103,7 @@ const MAX_CHILD_BATCH = 12; // how many subcats to aggregate when opening a pare
 async function fetchJson(url){const r = await fetch(url,{headers:{Accept:"application/json"}}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json();}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
 const fmtMoney=(v)=> v==null?"—": new Intl.NumberFormat('ru-RU').format(Number(v))+" ₸";
-const totalBalance=(it)=> Array.isArray(it.stocks)? it.stocks.reduce((s,x)=>s+num(x.balance),0): (it.balance ?? it.quantity ?? "—");
+const totalBalance=(it)=> Array.isArray(it.stocks)? it.stocks.reduce((s,x)=>s+num(x.balance),0) : (it.balance ?? it.quantity ?? "—");
 
 // ========================= ROUTER (hash-based) =========================
 function useHashRouter(){
@@ -481,7 +481,7 @@ function ProductsPage({ go, categoryId }) {
               <div className="title" title={it.title || it.name}>{it.title || it.name || `#${it.id}`}</div>
               <div className="badge">Штрихкод: {it.barcode ?? it.barcode}</div>
               <div className="badge">Цена: {fmtMoney(it.selling_price ?? it.price)}</div>
-              <div className="badge">Остаток: {totalBalance(it)} {it.unit_name}</div>
+              <div className="badge">Остаток: {totalBalance(it)<0 ? "Тауардың бар-жоғын сұраңыз" : totalBalance(it)} {it.unit_name}</div>
             </div>
           ))}
         </div>
@@ -679,7 +679,7 @@ function SearchPage(){
               <div className="title">{it.title||it.name}</div>
               <div className="badge">Штрихкод: {it.barcode}</div>
               <div className="badge">Цена: {fmtMoney(it.selling_price ?? it.price)}</div>
-              <div className="badge">Остаток: {totalBalance(it)} {it.unit_name}</div>
+              <div className="badge">Остаток: {totalBalance(it)<0 ? "Тауардың бар-жоғын сұраңыз" : totalBalance(it)} {it.unit_name}</div>
             </div>
           ))}
         </div>
