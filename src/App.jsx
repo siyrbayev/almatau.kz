@@ -277,7 +277,7 @@ function CategoriesPage({ go }){
 
                           <div
                             style={{
-                              color: '#4f4f4f',
+                              color: '#ba2828ff',
                               fontSize: 'clamp(12px, 1.2vw, 18px)',
                               lineHeight: 1.2,
                               margin: '8px 0 16px 0',
