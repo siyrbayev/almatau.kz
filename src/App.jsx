@@ -282,13 +282,11 @@ function CategoriesPage({ go }){
                               lineHeight: 1.2,
                               margin: '8px 0 16px 0',
                               textAlign: 'left',
-                              fontWeight: 400,
-                              display: '-webkit-box',
-                              WebkitBoxOrient: 'vertical',
-                              WebkitLineClamp: 2,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              wordBreak: 'break-word',
+                              fontWeight: 800,
+                              display: 'block',
+                              overflow: 'visible',
+                              textOverflow: 'unset',
+                              whiteSpace: 'normal',
                               hyphens: 'auto',
                               
                             }}
