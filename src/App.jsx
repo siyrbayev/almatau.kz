@@ -241,7 +241,7 @@ function CategoriesPage({ go }){
               {/* Плитки подкатегорий (как в макете) */}
               {childs.length>0 && (
                 <div key={parent.id}  className="card" style={{ borderColor: 'transparent', boxShadow: 'none', marginBottom: '24px' }}>
-                  <div className="title" style={{ marginBottom: '24px', color: '#4f4f4f'}} title={parent.title}>{parent.title}</div>
+                  <div className="title" style={{ marginBottom: '36px', marginLeft: '-12px',marginRight: '-12px', color: '#4f4f4f'}} title={parent.title}>{parent.title}</div>
                   <div className="child-grid" style={{ margin: '-12px' }}>
                     {childs.map(ch => {
                       const disabled = !(num(ch.items_count) > 0);
